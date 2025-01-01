@@ -1,4 +1,4 @@
-"use strict";(()=>{var l=(c,e,t)=>new Promise((o,i)=>{var a=s=>{try{r(t.next(s))}catch(d){i(d)}},n=s=>{try{r(t.throw(s))}catch(d){i(d)}},r=s=>s.done?o(s.value):Promise.resolve(s.value).then(a,n);r((t=t.apply(c,e)).next())});var m=`
+"use strict";(()=>{var l=(c,e,t)=>new Promise((i,o)=>{var n=s=>{try{r(t.next(s))}catch(d){o(d)}},a=s=>{try{r(t.throw(s))}catch(d){o(d)}},r=s=>s.done?i(s.value):Promise.resolve(s.value).then(n,a);r((t=t.apply(c,e)).next())});var h=`
 .embedai-widget-container {
   position: fixed;
   bottom: 20px;
@@ -161,8 +161,30 @@
   background: var(--primary-color);
   color: white;
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.embedai-header-top {
+  display: flex;
   align-items: flex-start;
   gap: 12px;
+}
+
+.embedai-header-text {
+  flex: 1;
+}
+
+.embedai-header-text h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.embedai-header-text p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  opacity: 0.9;
 }
 
 .embedai-back-button {
@@ -180,16 +202,38 @@
   opacity: 1;
 }
 
-.embedai-chat-header h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+.embedai-human-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: fit-content;
 }
 
-.embedai-chat-header p {
-  margin: 4px 0 0;
-  font-size: 14px;
-  opacity: 0.9;
+.embedai-human-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.embedai-human-button svg {
+  width: 16px;
+  height: 16px;
+  stroke: white;
+}
+
+.embedai-input-container {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .embedai-messages-container {
@@ -400,39 +444,119 @@
   font-weight: 500;
   cursor: pointer;
 }
-`,p=class{constructor(e){this.chatId=null;this.showingWelcome=!0;this.botConfig=null;this.organizationId=e.organizationId,this.collectionId=e.collectionId,this.apiUrl=e.apiUrl,this.includePageContext=e.includePageContext||!1,this.injectStyles(),this.loadBotConfig().then(()=>{this.createWidget(),this.attachEventListeners()})}injectStyles(){let e=document.createElement("style");e.textContent=m,document.head.appendChild(e)}loadBotConfig(){return l(this,null,function*(){try{let e=yield fetch(`${this.apiUrl}/get_bot_config?orgId=${this.organizationId}`);if(!e.ok)throw new Error("Failed to load bot config");let t=yield e.json();t.botConfig&&t.botConfig.length>0&&(this.botConfig=t.botConfig[0],this.applyTheme())}catch(e){console.error("Error loading bot config:",e)}})}applyTheme(){this.botConfig&&(document.documentElement.style.setProperty("--primary-color",this.botConfig.primaryColor),document.documentElement.style.setProperty("--button-color",this.botConfig.buttonColor),document.documentElement.style.setProperty("--text-color",this.botConfig.textColor))}createWidget(){var i;this.container=document.createElement("div"),this.container.className="embedai-widget-container";let e=document.createElement("button");e.className="embedai-chat-button",e.innerHTML=`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+`,p=class{constructor(e){this.chatId=null;this.showingWelcome=!0;this.botConfig=null;this.ws=null;this.wsToken=null;this.wsUrl=null;this.organizationId=e.organizationId,this.collectionId=e.collectionId,this.apiUrl=e.apiUrl,this.includePageContext=e.includePageContext||!1,this.injectStyles(),this.loadBotConfig().then(()=>{this.createWidget(),this.attachEventListeners()})}injectStyles(){let e=document.createElement("style");e.textContent=h,document.head.appendChild(e)}loadBotConfig(){return l(this,null,function*(){try{let e=yield fetch(`${this.apiUrl}/get_bot_config?orgId=${this.organizationId}`);if(!e.ok)throw new Error("Failed to load bot config");let t=yield e.json();t.botConfig&&t.botConfig.length>0&&(this.botConfig=t.botConfig[0],this.applyTheme())}catch(e){console.error("Error loading bot config:",e)}})}applyTheme(){this.botConfig&&(document.documentElement.style.setProperty("--primary-color",this.botConfig.primaryColor),document.documentElement.style.setProperty("--button-color",this.botConfig.buttonColor),document.documentElement.style.setProperty("--text-color",this.botConfig.textColor))}createWidget(){var n;this.container=document.createElement("div"),this.container.className="embedai-widget-container";let e=document.createElement("button");e.className="embedai-chat-button",e.innerHTML=`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-    </svg>`,this.chatWindow=document.createElement("div"),this.chatWindow.className="embedai-chat-window";let t=document.createElement("div");t.className="embedai-view embedai-welcome-view";let o=document.createElement("div");o.className="embedai-view embedai-chat-view",o.innerHTML=`
+    </svg>`,this.chatWindow=document.createElement("div"),this.chatWindow.className="embedai-chat-window";let t=document.createElement("div");t.className="embedai-view embedai-welcome-view";let i=document.createElement("div");i.className="embedai-view embedai-chat-view",i.innerHTML=`
       <div class="embedai-chat-header">
         <button class="embedai-back-button">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
         </button>
-        <div>
+        <div class="embedai-header-text">
           <h3>Chat with AI Assistant</h3>
           <p>We typically reply in a few minutes</p>
         </div>
+        <button class="embedai-human-button" title="Request human support">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </button>
       </div>
       <div class="embedai-messages-container"></div>
       <div class="embedai-input-container">
         <input type="text" class="embedai-input" placeholder="Type your message...">
         <button class="embedai-send-button">Send</button>
       </div>
-    `,this.messagesContainer=o.querySelector(".embedai-messages-container"),this.input=o.querySelector(".embedai-input"),this.chatWindow.appendChild(t),this.chatWindow.appendChild(o),this.container.appendChild(this.chatWindow),this.container.appendChild(e),document.body.appendChild(this.container),(i=this.botConfig)!=null&&i.showWelcomePage?(this.createWelcomePage(),o.style.display="none"):(t.style.display="none",this.showChat())}attachEventListeners(){let e=this.container.querySelector(".embedai-chat-button"),t=this.container.querySelector(".embedai-close-button"),o=this.container.querySelector(".embedai-send-button"),i=this.container.querySelector(".embedai-back-button");e==null||e.addEventListener("click",()=>this.toggleChat()),t==null||t.addEventListener("click",()=>this.toggleChat()),o==null||o.addEventListener("click",()=>this.sendMessage()),i==null||i.addEventListener("click",()=>this.showWelcome()),this.input.addEventListener("keypress",a=>{a.key==="Enter"&&this.sendMessage()})}toggleChat(){this.chatWindow.classList.toggle("open")&&!this.chatId&&this.startChat()}getPageContent(){var o;if(!this.includePageContext)return"";let e=i=>{var r;let a=i.cloneNode(!0);return a.querySelectorAll("script, style, noscript, .embedai-widget-container").forEach(s=>s.remove()),((r=a.textContent)==null?void 0:r.replace(/\s+/g," ").trim())||""};return[document.title,(o=document.querySelector('meta[name="description"]'))==null?void 0:o.getAttribute("content"),...Array.from(document.querySelectorAll("main, article, .content, #content")).map(e),document.body.querySelector("main")?"":e(document.body)].filter(Boolean).join(`
-`).slice(0,4e3)}startChat(){return l(this,null,function*(){try{let e=yield fetch(`${this.apiUrl}/start_chat`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({organizationId:this.organizationId,collectionId:this.collectionId})});if(!e.ok)throw new Error("Failed to start chat");let t=yield e.json();this.chatId=t.chatId,this.addMessage("Hi! How can I help you today?",!1)}catch(e){console.error("Error starting chat:",e),this.addMessage("Sorry, I'm having trouble connecting. Please try again later.",!1)}})}sendMessage(e){return l(this,null,function*(){let t=e?JSON.stringify(e):this.input.value.trim();if(!t||!this.chatId)return;this.input.value="",this.input.disabled=!0;let o={content:t,isUser:!0};this.addMessage(t,!0);try{let i=Array.from(this.messagesContainer.children).map(s=>({content:s.textContent||"",isUser:s.classList.contains("embedai-user-message"),organizationId:this.organizationId,collectionName:this.collectionId})),a={chatId:this.chatId,message:t,organizationId:this.organizationId,collectionId:this.collectionId,messages:i};this.includePageContext&&(a.pageContent=this.getPageContent(),a.pageUrl=window.location.href);let n=yield fetch(`${this.apiUrl}/send_message`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(a)});if(!n.ok)throw new Error("Failed to send message");let r=yield n.json();r.use_form?this.addMessageWithForm(r.response,JSON.parse(r.use_form.fields),r.use_form.inputId):r.sources?this.addMessageWithSources(r.response,r.sources):this.addMessage(r.response,!1)}catch(i){console.error("Error sending message:",i),this.addMessage("Sorry, I couldn't process your message. Please try again.",!1)}finally{this.input.disabled=!1}})}addMessageWithSources(e,t){if(this.addMessage(e,!1),t&&t.length>0){let o=document.createElement("div");o.className="embedai-sources",this.messagesContainer.appendChild(o)}}formatMarkdown(e){return e.replace(/###\s+(.*?)(?:\n|$)/g,'<h3 style="font-size: 16px; font-weight: 600; margin: 16px 0 8px;">$1</h3>').replace(/##\s+(.*?)(?:\n|$)/g,'<h2 style="font-size: 18px; font-weight: 600; margin: 16px 0 8px;">$1</h2>').replace(/#\s+(.*?)(?:\n|$)/g,'<h1 style="font-size: 20px; font-weight: 600; margin: 16px 0 8px;">$1</h1>').replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\*(.*?)\*/g,"<em>$1</em>").replace(/```([\s\S]*?)```/g,"<pre><code>$1</code></pre>").replace(/`(.*?)`/g,"<code>$1</code>").replace(/^\d+\.\s+(.*)$/gm,"<li>$1</li>").replace(/^-\s+(.*)$/gm,"<li>$1</li>").replace(/\[(.*?)\]\((.*?)\)/g,'<a href="$2" target="_blank">$1</a>').replace(/\n/g,"<br>")}addMessage(e,t){let o=document.createElement("div");if(o.className=`embedai-message ${t?"user":""}`,o.style.cssText=`
+    `,this.messagesContainer=i.querySelector(".embedai-messages-container"),this.input=i.querySelector(".embedai-input"),this.chatWindow.appendChild(t),this.chatWindow.appendChild(i),this.container.appendChild(this.chatWindow),this.container.appendChild(e),document.body.appendChild(this.container),(n=this.botConfig)!=null&&n.showWelcomePage?(this.createWelcomePage(),i.style.display="none"):(t.style.display="none",this.showChat());let o=document.createElement("style");o.textContent=`
+      .embedai-chat-header {
+        padding: 16px;
+        background: var(--primary-color);
+        color: white;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .embedai-header-text {
+        flex: 1;
+      }
+
+      .embedai-header-text h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+      }
+
+      .embedai-header-text p {
+        margin: 4px 0 0;
+        font-size: 14px;
+        opacity: 0.9;
+      }
+
+      .embedai-back-button {
+        background: none;
+        border: none;
+        padding: 4px;
+        cursor: pointer;
+        color: white;
+        opacity: 0.9;
+        transition: opacity 0.2s;
+        margin-top: 2px;
+      }
+
+      .embedai-back-button:hover {
+        opacity: 1;
+      }
+
+      .embedai-human-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 100%;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .embedai-human-button:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .embedai-human-button svg {
+        width: 16px;
+        height: 16px;
+        stroke: white;
+      }
+
+      .embedai-input-container {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        padding: 16px;
+        border-top: 1px solid #e5e7eb;
+      }
+    `,document.head.appendChild(o)}attachEventListeners(){let e=this.container.querySelector(".embedai-chat-button"),t=this.container.querySelector(".embedai-close-button"),i=this.container.querySelector(".embedai-send-button"),o=this.container.querySelector(".embedai-back-button"),n=this.container.querySelector(".embedai-human-button");e==null||e.addEventListener("click",()=>this.toggleChat()),t==null||t.addEventListener("click",()=>this.toggleChat()),i==null||i.addEventListener("click",()=>this.sendMessage()),o==null||o.addEventListener("click",()=>this.showWelcome()),n==null||n.addEventListener("click",()=>this.requestHumanChat()),this.input.addEventListener("keypress",a=>{a.key==="Enter"&&this.sendMessage()})}toggleChat(){this.chatWindow.classList.toggle("open")&&!this.chatId&&this.startChat()}getPageContent(){var i;if(!this.includePageContext)return"";let e=o=>{var r;let n=o.cloneNode(!0);return n.querySelectorAll("script, style, noscript, .embedai-widget-container").forEach(s=>s.remove()),((r=n.textContent)==null?void 0:r.replace(/\s+/g," ").trim())||""};return[document.title,(i=document.querySelector('meta[name="description"]'))==null?void 0:i.getAttribute("content"),...Array.from(document.querySelectorAll("main, article, .content, #content")).map(e),document.body.querySelector("main")?"":e(document.body)].filter(Boolean).join(`
+`).slice(0,4e3)}startChat(){return l(this,null,function*(){try{let e=yield fetch(`${this.apiUrl}/start_chat`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({organizationId:this.organizationId,collectionId:this.collectionId})});if(!e.ok)throw new Error("Failed to start chat");let t=yield e.json();this.chatId=t.chatId,this.addMessage("Hi! How can I help you today?",!1)}catch(e){console.error("Error starting chat:",e),this.addMessage("Sorry, I'm having trouble connecting. Please try again later.",!1)}})}sendMessage(e){return l(this,null,function*(){let t=e?JSON.stringify(e):this.input.value.trim();if(!(!t||!this.chatId)){if(this.input.value="",this.input.disabled=!0,this.ws&&this.ws.readyState===WebSocket.OPEN){this.ws.send(JSON.stringify({type:"human_chat",content:t})),this.addMessage(t,!0),this.input.disabled=!1;return}this.addMessage(t,!0);try{let i=Array.from(this.messagesContainer.children).map(r=>({content:r.textContent||"",isUser:r.classList.contains("embedai-user-message"),organizationId:this.organizationId,collectionName:this.collectionId})),o={chatId:this.chatId,message:t,organizationId:this.organizationId,collectionId:this.collectionId,messages:i};this.includePageContext&&(o.pageContent=this.getPageContent(),o.pageUrl=window.location.href);let n=yield fetch(`${this.apiUrl}/send_message`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(o)});if(!n.ok)throw new Error("Failed to send message");let a=yield n.json();a.use_form?this.addMessageWithForm(a.response,JSON.parse(a.use_form.fields),a.use_form.inputId):a.sources?this.addMessageWithSources(a.response,a.sources):this.addMessage(a.response,!1)}catch(i){console.error("Error sending message:",i),this.addMessage("Sorry, I couldn't process your message. Please try again.",!1)}finally{this.input.disabled=!1}}})}addMessageWithSources(e,t){if(this.addMessage(e,!1),t&&t.length>0){let i=document.createElement("div");i.className="embedai-sources",this.messagesContainer.appendChild(i)}}formatMarkdown(e){return e.replace(/###\s+(.*?)(?:\n|$)/g,'<h3 style="font-size: 16px; font-weight: 600; margin: 16px 0 8px;">$1</h3>').replace(/##\s+(.*?)(?:\n|$)/g,'<h2 style="font-size: 18px; font-weight: 600; margin: 16px 0 8px;">$1</h2>').replace(/#\s+(.*?)(?:\n|$)/g,'<h1 style="font-size: 20px; font-weight: 600; margin: 16px 0 8px;">$1</h1>').replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\*(.*?)\*/g,"<em>$1</em>").replace(/```([\s\S]*?)```/g,"<pre><code>$1</code></pre>").replace(/`(.*?)`/g,"<code>$1</code>").replace(/^\d+\.\s+(.*)$/gm,"<li>$1</li>").replace(/^-\s+(.*)$/gm,"<li>$1</li>").replace(/\[(.*?)\]\((.*?)\)/g,'<a href="$2" target="_blank">$1</a>').replace(/\n/g,"<br>")}addMessage(e,t){let i=document.createElement("div");if(i.className=`embedai-message ${t?"user":""}`,i.style.cssText=`
       display: flex;
       gap: 8px;
       align-items: flex-start;
       margin-bottom: 16px;
       ${t?"justify-content: flex-end;":""}
-    `,!t){let n=document.createElement("div");n.className="embedai-avatar",n.style.cssText=`
+    `,!t){let a=document.createElement("div");a.className="embedai-avatar",a.style.cssText=`
         width: 32px;
         height: 32px;
         border-radius: 50%;
         background: #e5e7eb;
         flex-shrink: 0;
-      `,o.appendChild(n)}let i=document.createElement("div");i.className="embedai-message-content",i.style.cssText=`
+      `,i.appendChild(a)}let o=document.createElement("div");o.className="embedai-message-content",o.style.cssText=`
       padding: 8px 12px;
       border-radius: 12px;
       max-width: 80%;
@@ -446,7 +570,7 @@
           color: #111827;
           border-bottom-left-radius: 4px;
         `}
-    `;let a=document.createElement("style");a.textContent=`
+    `;let n=document.createElement("style");n.textContent=`
       .embedai-message-content h1,
       .embedai-message-content h2,
       .embedai-message-content h3 {
@@ -494,23 +618,23 @@
       .embedai-message-content p {
         margin: 8px 0;
       }
-    `,document.head.appendChild(a),t?i.textContent=e:i.innerHTML=this.formatMarkdown(e),o.appendChild(i),this.messagesContainer.appendChild(o),this.messagesContainer.scrollTop=this.messagesContainer.scrollHeight}addMessageWithForm(e,t,o){this.addMessage(e,!1);let i=document.createElement("form");i.className="embedai-form",i.style.cssText=`
+    `,document.head.appendChild(n),t?o.textContent=e:o.innerHTML=this.formatMarkdown(e),i.appendChild(o),this.messagesContainer.appendChild(i),this.messagesContainer.scrollTop=this.messagesContainer.scrollHeight}addMessageWithForm(e,t,i){this.addMessage(e,!1);let o=document.createElement("form");o.className="embedai-form",o.style.cssText=`
       margin: 16px 0;
       padding: 16px;
       background: white;
       border-radius: 12px;
       border: 1px solid #e5e7eb;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    `,t.forEach(n=>{let r=document.createElement("div");r.style.cssText=`
+    `,t.forEach(a=>{let r=document.createElement("div");r.style.cssText=`
         margin-bottom: 16px;
         display: flex;
         flex-direction: column;
         gap: 6px;
-      `;let s=document.createElement("label");s.textContent=n.label,s.style.cssText=`
+      `;let s=document.createElement("label");s.textContent=a.label,s.style.cssText=`
         font-size: 14px;
         font-weight: 500;
         color: #374151;
-      `;let d=n.type==="textarea"?document.createElement("textarea"):document.createElement("input");d.className="embedai-form-input",d.name=n.name,n.type!=="textarea"&&(d.type=n.type),d.required=n.required||!1,d.style.cssText=`
+      `;let d=a.type==="textarea"?document.createElement("textarea"):document.createElement("input");d.className="embedai-form-input",d.name=a.name,a.type!=="textarea"&&(d.type=a.type),d.required=a.required||!1,d.style.cssText=`
         padding: 8px 12px;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
@@ -529,7 +653,7 @@
         &::placeholder {
           color: #9ca3af;
         }
-      `,n.type==="textarea"&&(d.style.minHeight="100px",d.style.resize="vertical"),r.appendChild(s),r.appendChild(d),i.appendChild(r)});let a=document.createElement("button");if(a.type="submit",a.className="embedai-send-button",a.textContent="Submit",a.style.cssText=`
+      `,a.type==="textarea"&&(d.style.minHeight="100px",d.style.resize="vertical"),r.appendChild(s),r.appendChild(d),o.appendChild(r)});let n=document.createElement("button");if(n.type="submit",n.className="embedai-send-button",n.textContent="Submit",n.style.cssText=`
       width: 100%;
       padding: 10px 16px;
       background: var(--primary-color);
@@ -548,12 +672,12 @@
       &:active {
         transform: scale(0.98);
       }
-    `,t.some(n=>n.required)){let n=document.createElement("div");n.style.cssText=`
+    `,t.some(a=>a.required)){let a=document.createElement("div");a.style.cssText=`
         font-size: 12px;
         color: #6b7280;
         margin-top: 12px;
         text-align: center;
-      `,n.textContent="* Required fields",i.appendChild(n)}i.appendChild(a),i.addEventListener("submit",n=>l(this,null,function*(){n.preventDefault(),a.disabled=!0,a.style.opacity="0.7",a.textContent="Submitting...";let r=new FormData(i),s=Object.fromEntries(r.entries());yield this.sendMessage({formData:s,inputId:o}),i.remove()})),this.messagesContainer.appendChild(i),this.messagesContainer.scrollTop=this.messagesContainer.scrollHeight}createWelcomePage(){if(!this.botConfig)return;let e=this.chatWindow.querySelector(".embedai-welcome-view");if(!e)return;e.innerHTML="";let t=document.createElement("div");t.className="embedai-welcome-container";let o=document.createElement("div");o.className="embedai-welcome-header",o.style.cssText=`
+      `,a.textContent="* Required fields",o.appendChild(a)}o.appendChild(n),o.addEventListener("submit",a=>l(this,null,function*(){a.preventDefault(),n.disabled=!0,n.style.opacity="0.7",n.textContent="Submitting...";let r=new FormData(o),s=Object.fromEntries(r.entries());yield this.sendMessage({formData:s,inputId:i}),o.remove()})),this.messagesContainer.appendChild(o),this.messagesContainer.scrollTop=this.messagesContainer.scrollHeight}createWelcomePage(){if(!this.botConfig)return;let e=this.chatWindow.querySelector(".embedai-welcome-view");if(!e)return;e.innerHTML="";let t=document.createElement("div");t.className="embedai-welcome-container";let i=document.createElement("div");i.className="embedai-welcome-header",i.style.cssText=`
       padding: 24px 16px;
       background: linear-gradient(to bottom, 
         ${this.botConfig.primaryColor} 0%, 
@@ -565,10 +689,10 @@
       flex-direction: column;
       align-items: flex-start;
       justify-content: flex-start;
-    `,o.innerHTML=`
+    `,i.innerHTML=`
       <h3 class="embedai-welcome-title" style="color: ${this.botConfig.textColor}">${this.botConfig.welcomeTitle}</h3>
       <p class="embedai-welcome-subtitle" style="color: ${this.botConfig.textColor}">${this.botConfig.welcomeSubtitle}</p>
-    `;let i=document.createElement("div");i.className="embedai-cards-container",i.style.cssText=`
+    `;let o=document.createElement("div");o.className="embedai-cards-container",o.style.cssText=`
       padding: 16px;
       flex: 1;
       overflow-y: auto;
@@ -578,7 +702,7 @@
       margin-top: -60px;
       position: relative;
       z-index: 1;
-    `,this.botConfig.welcomeCards.forEach(s=>{i.appendChild(this.createWelcomeCard(s))});let a=document.createElement("div");a.className="embedai-navigation",a.innerHTML=`
+    `,this.botConfig.welcomeCards.forEach(s=>{o.appendChild(this.createWelcomeCard(s))});let n=document.createElement("div");n.className="embedai-navigation",n.innerHTML=`
       <button class="embedai-nav-button active">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 12l9-9 9 9h-2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7H3z"></path>
@@ -592,7 +716,7 @@
         </svg>
         Chat With Us
       </button>
-    `,t.appendChild(o),t.appendChild(i),t.appendChild(a),e.appendChild(t);let[n,r]=a.querySelectorAll(".embedai-nav-button");n.addEventListener("click",()=>this.showWelcome()),r.addEventListener("click",()=>this.showChat())}createWelcomeCard(e){let t=document.createElement("div");return t.className="embedai-welcome-card",t.innerHTML=`
+    `,t.appendChild(i),t.appendChild(o),t.appendChild(n),e.appendChild(t);let[a,r]=n.querySelectorAll(".embedai-nav-button");a.addEventListener("click",()=>this.showWelcome()),r.addEventListener("click",()=>this.showChat())}createWelcomeCard(e){let t=document.createElement("div");return t.className="embedai-welcome-card",t.innerHTML=`
       <div class="embedai-card-content">
         <h4>${e.title}</h4>
         <p>${e.description}</p>
@@ -600,4 +724,4 @@
       <div class="embedai-card-icon">
         ${e.type==="quick-ask"?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>'}
       </div>
-    `,t.addEventListener("click",()=>{e.type==="quick-ask"?(this.showChat(),e.action&&(this.input.value=e.action,this.sendMessage())):e.type==="navigation"&&e.action&&(window.location.href=e.action)}),t}showWelcome(){let e=this.chatWindow.querySelector(".embedai-welcome-view"),t=this.chatWindow.querySelector(".embedai-chat-view");e.style.display="flex",t.style.display="none",this.showingWelcome=!0,this.updateNavigation()}showChat(){let e=this.chatWindow.querySelector(".embedai-welcome-view"),t=this.chatWindow.querySelector(".embedai-chat-view");e.style.display="none",t.style.display="flex",this.showingWelcome=!1,this.updateNavigation(),this.chatId||this.startChat()}updateNavigation(){let e=this.chatWindow.querySelector(".embedai-nav-button:first-child"),t=this.chatWindow.querySelector(".embedai-nav-button:last-child");e&&t&&(e.classList.toggle("active",this.showingWelcome),t.classList.toggle("active",!this.showingWelcome))}};(function(){let c=document.currentScript;if(c){let e=c.getAttribute("data-org-id"),t=c.getAttribute("data-collection-id"),o=c.getAttribute("data-api-url");e&&t&&o&&new p({organizationId:e,collectionId:t,apiUrl:o})}window.EmbedAIWidget=p})();})();
+    `,t.addEventListener("click",()=>{e.type==="quick-ask"?(this.showChat(),e.action&&(this.input.value=e.action,this.sendMessage())):e.type==="navigation"&&e.action&&(window.location.href=e.action)}),t}showWelcome(){let e=this.chatWindow.querySelector(".embedai-welcome-view"),t=this.chatWindow.querySelector(".embedai-chat-view");e.style.display="flex",t.style.display="none",this.showingWelcome=!0,this.updateNavigation()}showChat(){let e=this.chatWindow.querySelector(".embedai-welcome-view"),t=this.chatWindow.querySelector(".embedai-chat-view");e.style.display="none",t.style.display="flex",this.showingWelcome=!1,this.updateNavigation(),this.chatId||this.startChat()}updateNavigation(){let e=this.chatWindow.querySelector(".embedai-nav-button:first-child"),t=this.chatWindow.querySelector(".embedai-nav-button:last-child");e&&t&&(e.classList.toggle("active",this.showingWelcome),t.classList.toggle("active",!this.showingWelcome))}requestHumanChat(){return l(this,null,function*(){if(this.chatId)try{let e=yield fetch("https://embedai-backend-588efaf85c73.herokuapp.com/request_human",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chatId:this.chatId,organizationId:this.organizationId,collectionId:this.collectionId})});if(!e.ok)throw new Error("Failed to request human support");let t=yield e.json();this.wsToken=t.wsToken,this.wsUrl=t.wsUrl,this.addMessage("I've requested human support for you. Please wait while I connect you with an agent.",!1),this.connectWebSocket()}catch(e){console.error("Error requesting human support:",e),this.addMessage("Sorry, I couldn't request human support at this time. Please try again later.",!1)}})}connectWebSocket(){if(!this.wsUrl||!this.wsToken){console.error("Missing WebSocket URL or token");return}this.ws&&this.ws.close(),this.ws=new WebSocket(this.wsUrl),this.ws.onopen=()=>{var e;console.log("Connected to WebSocket"),(e=this.ws)==null||e.send(JSON.stringify({token:this.wsToken})),this.addMessage("Connected to human support. An agent will be with you shortly.",!1)},this.ws.onmessage=e=>{let t=JSON.parse(e.data);if(t.error){console.error("WebSocket error:",t.error),this.addMessage("Sorry, there was an error with the connection. Please try again.",!1);return}let i=t.content||t.message,o=t.type==="human_chat"?"received":"system";this.addMessage(i,o!=="received")},this.ws.onclose=()=>{console.log("WebSocket Disconnected"),this.addMessage("Disconnected from human support.",!1),this.ws=null,this.wsToken=null,this.wsUrl=null},this.ws.onerror=e=>{console.error("WebSocket error:",e),this.addMessage("Error connecting to human support. Please try again.",!1)}}};(function(){let c=document.currentScript;if(c){let e=c.getAttribute("data-org-id"),t=c.getAttribute("data-collection-id"),i=c.getAttribute("data-api-url");e&&t&&i&&new p({organizationId:e,collectionId:t,apiUrl:i})}window.EmbedAIWidget=p})();})();
